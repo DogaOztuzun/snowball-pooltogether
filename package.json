@@ -1,0 +1,34 @@
+{
+  "name": "snowball-pooltogether",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "console": "npx hardhat console",
+    "test": "yarn hardhat test --network hardhat test/snowballYieldSorce-test.js",
+    "deploy": "npx hardhat run scripts/deploy.js",
+    "hardhat": "npx hardhat",
+    "accounts": "npx hardhat accounts",
+    "balances": "npx hardhat balances",
+    "send-avax": "npx hardhat run scripts/sendAvax.js",
+    "fund-cchain-addresses": "npx hardhat run scripts/fund-cchain-addresses.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "avalanche": "^3.2.5",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.1.0",
+    "hardhat": "^2.1.2",
+    "web3": "^1.3.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.1.0",
+    "@pooltogether/pooltogether-contracts": "^3.3.7",
+    "@pooltogether/yield-source-interface": "^1.0.1"
+  }
+}

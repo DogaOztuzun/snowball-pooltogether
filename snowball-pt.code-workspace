@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"solidity.compileUsingRemoteVersion": "v0.6.12+commit.27d51765",
+		"solidity.defaultCompiler": "localFile",
+		"solidity.compileUsingLocalVersion": "/home/unquale/p/ptava/snowball-pooltogether/soljson-v0.6.12+commit.27d51765.js"
+	}
+}
