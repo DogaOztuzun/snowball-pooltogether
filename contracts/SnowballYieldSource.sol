@@ -15,16 +15,18 @@ contract SnowballYieldSource is IYieldSource {
   mapping(address => uint256) public balances;
 
   IERC20 private sTokenContract;
+  IERC20 private snowballTokenContact;
   IIcequeen private icequeenContract;
   
 
-  constructor(address _sToken, address _icequeen, uint256 _poolIndex) public {
+  constructor(address _sToken, address _icequeen, address _snowballToken, uint256 _poolIndex) public {
     sToken = _sToken;
     icequeen = _icequeen;
     poolIndex = _poolIndex;
 
     icequeenContract = IIcequeen(icequeen);
     sTokenContract = IERC20(sToken);
+    snowballTokenContact = IERC20(_snowballToken);
   }
 
   /// @notice Returns the ERC20 asset token used for deposits.
@@ -48,8 +50,7 @@ contract SnowballYieldSource is IYieldSource {
         );
     uint256 sourceShares = getBalanceFromIcequeen(address(this));
 
-    return (balances[addr].mul(balance).div(sourceShares));
-    // return totalShares;
+    return balances[addr].mul(balance).div(sourceShares));
   }
 
   /// @notice Supplies tokens to the yield source.  Allows assets to be supplied on other user's behalf using the `to` param.
@@ -72,36 +73,28 @@ contract SnowballYieldSource is IYieldSource {
   /// @param amount The amount of `token()` to withdraw.  Denominated in `token()` as above.
   /// @return The actual amount of tokens that were redeemed.
   function redeemToken(uint256 amount) external override returns (uint256) {
-    address lp = getLiqProviderFromIcequeen();
-    IERC20 lpToken = IERC20(lp);
-    uint256 totalShares = lpToken.totalSupply();
-    uint256 iqSnowglobeBalance = sTokenContract.balanceOf(icequeen); // todo: SNOB ?
-    uint256 requiredShares = amount.mul(totalShares).div(iqSnowglobeBalance);
+    icequeenContract.withdraw(poolIndex, amount);
+    sTokenContract.transfer(msg.sender, amount);
+    balances[msg.sender] = balances[msg.sender].sub(amount);
 
-    uint256 iqBeforeBalance = getBalanceFromIcequeen(address(this));
-    uint256 sgBeforeBalance = sTokenContract.balanceOf(address(this));
+    return (amount);
+  }
 
-    icequeenContract.withdraw(poolIndex, requiredShares);
-
-    uint256 iqAfterBalance = getBalanceFromIcequeen(address(this));
-    uint256 sgAfterBalance = sTokenContract.balanceOf(address(this));
-
-    uint256 iqBalanceDiff = iqBeforeBalance.sub(iqAfterBalance);
-    uint256 sgBalanceDiff = sgAfterBalance.sub(sgBeforeBalance);
-
-    balances[msg.sender] = balances[msg.sender].sub(iqBalanceDiff);
-    sTokenContract.transfer(msg.sender, iqBalanceDiff);
-
-    return (sgBalanceDiff);
+  function harvest(address prizePool) external returns (uint256) {    
+    icequeenContract.deposit(poolIndex, 0);
+    uint256 amount = snowballTokenContact.balanceOf(address(this));
+    snowballTokenContact.transfer(prizePool, amount);
+    
+    return amount;
   }
 
   function getLiqProviderFromIcequeen() private view returns (address) {
-    (address lp, uint256 x, uint256 y, uint256 z) = icequeenContract.poolInfo(poolIndex);
+    (address lp,,,) = icequeenContract.poolInfo(poolIndex);
     return lp;
   }
 
   function getBalanceFromIcequeen(address adr) private view returns (uint256) {
-    (uint256 balance, uint256 y1) = icequeenContract.userInfo(poolIndex, adr);
+    (uint256 balance,) = icequeenContract.userInfo(poolIndex, adr);
 
     return balance;
   }
