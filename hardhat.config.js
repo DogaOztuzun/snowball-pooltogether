@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
+require('hardhat-dependency-compiler');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -36,6 +37,20 @@ module.exports = {
         },
       },
     }
+  },
+  dependencyCompiler: {
+    paths: [
+      "@pooltogether/pooltogether-contracts/contracts/builders/PoolWithMultipleWinnersBuilder.sol",
+      "@pooltogether/pooltogether-contracts/contracts/registry/Registry.sol",
+      "@pooltogether/pooltogether-contracts/contracts/prize-pool/compound/CompoundPrizePoolProxyFactory.sol",
+      "@pooltogether/pooltogether-contracts/contracts/prize-pool/yield-source/YieldSourcePrizePoolProxyFactory.sol",
+      "@pooltogether/pooltogether-contracts/contracts/prize-pool/stake/StakePrizePoolProxyFactory.sol",
+      "@pooltogether/pooltogether-contracts/contracts/builders/MultipleWinnersBuilder.sol",
+      "@pooltogether/pooltogether-contracts/contracts/prize-strategy/multiple-winners/MultipleWinnersProxyFactory.sol",
+      "@pooltogether/pooltogether-contracts/contracts/builders/ControlledTokenBuilder.sol",
+      "@pooltogether/pooltogether-contracts/contracts/token/ControlledTokenProxyFactory.sol",
+      "@pooltogether/pooltogether-contracts/contracts/token/TicketProxyFactory.sol",
+    ]
   },
   networks: {
     hardhat: {

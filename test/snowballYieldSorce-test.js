@@ -44,6 +44,7 @@ describe("SnowballYieldSource", function(){
     yieldSource = await SnowballYieldSourceContract.deploy(
       snowglobe.address,
       icequeen.address,
+      snowballToken.address,
       0
       );
     
@@ -90,7 +91,7 @@ describe("SnowballYieldSource", function(){
     await yieldSource.supplyTokenTo(amount, wallet.address);
 
     expect(await snowglobe.balanceOf(wallet.address)).to.eq(0);
-    await yieldSource.redeemToken(amountFee);
-    expect(await snowglobe.balanceOf(wallet.address)).to.gt(amountFee);
+    await yieldSource.redeemToken(amount);
+    expect(await snowglobe.balanceOf(wallet.address)).to.eq(amount);
   });
 });

@@ -16,8 +16,9 @@ async function main() {
   // We get the contract to deploy
   let icequeen = "0x041EE186982159da50Cc8A3A87B5eC669Db0b758"
   let avaxSnobLP = "0xf91BD10B18B45262A324883FbDB2Ea21d66ca938"
+  let snob = "0xf319e2f610462f846d6e93f51cdc862eeff2a554"
   const SnowballYieldSourceContract = await hre.ethers.getContractFactory("SnowballYieldSource");
-  const snowballYieldSource = await SnowballYieldSourceContract.deploy(avaxSnobLP, icequeen, 1);
+  const snowballYieldSource = await SnowballYieldSourceContract.deploy(avaxSnobLP, icequeen, snob, 1);
 
   await snowballYieldSource.deployed();
 
