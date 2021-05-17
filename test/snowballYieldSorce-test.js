@@ -72,8 +72,8 @@ describe("SnowballYieldSource", function(){
 
     await snowglobe.connect(wallet).approve(yieldSource.address, amount);
     await yieldSource.supplyTokenTo(amount, wallet.address);
-    expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.gt(
-      amountFee
+    expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.eq(
+      amount
     );
   });
 
@@ -81,8 +81,8 @@ describe("SnowballYieldSource", function(){
     await snowglobe.connect(wallet).approve(yieldSource.address, amount);
     await yieldSource.supplyTokenTo(amount, wallet.address);
     expect(await snowglobe.balanceOf(icequeen.address)).to.gt(amount.mul(100));
-    expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.gt(
-      amountFee
+    expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.eq(
+      amount
     );
   });
 

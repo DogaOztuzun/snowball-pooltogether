@@ -17,6 +17,8 @@ contract SnowballYieldSource is IYieldSource {
   IERC20 private sTokenContract;
   IERC20 private snowballTokenContact;
   IIcequeen private icequeenContract;
+
+  address _owner;
   
 
   constructor(address _sToken, address _icequeen, address _snowballToken, uint256 _poolIndex) public {
@@ -27,6 +29,8 @@ contract SnowballYieldSource is IYieldSource {
     icequeenContract = IIcequeen(icequeen);
     sTokenContract = IERC20(sToken);
     snowballTokenContact = IERC20(_snowballToken);
+
+    _owner = msg.sender;
   }
 
   /// @notice Returns the ERC20 asset token used for deposits.
@@ -35,22 +39,11 @@ contract SnowballYieldSource is IYieldSource {
     return (sToken);
   }
 
-  /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
   /// @return The underlying balance of asset tokens
   function balanceOfToken(address addr) external override returns (uint256) {
     if(balances[addr] == 0) return 0;
 
-    uint256 shares = getBalanceFromIcequeen(address(this));
-    IERC20 lp = IERC20(getLiqProviderFromIcequeen());
-    uint256 totalShares = lp.totalSupply();
-
-    uint256 balance =
-        shares.mul(sTokenContract.balanceOf(address(icequeen))).div(
-            totalShares
-        );
-    uint256 sourceShares = getBalanceFromIcequeen(address(this));
-
-    return balances[addr].mul(balance).div(sourceShares));
+    return balances[addr];
   }
 
   /// @notice Supplies tokens to the yield source.  Allows assets to be supplied on other user's behalf using the `to` param.
@@ -81,6 +74,8 @@ contract SnowballYieldSource is IYieldSource {
   }
 
   function harvest(address prizePool) external returns (uint256) {    
+    require(_owner == msg.sender);
+
     icequeenContract.deposit(poolIndex, 0);
     uint256 amount = snowballTokenContact.balanceOf(address(this));
     snowballTokenContact.transfer(prizePool, amount);
