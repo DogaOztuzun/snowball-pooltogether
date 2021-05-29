@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 const { solidity } = require("ethereum-waffle");
 const chai = require("chai");
+chai.use(require('chai-as-promised'))
 
 chai.use(solidity);
 
@@ -75,6 +76,9 @@ describe("SnowballYieldSource", function(){
     expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.eq(
       amount
     );
+
+    let userInfo = await icequeen.userInfo(0, yieldSource.address);
+    expect(userInfo[0]).to.eq(amount); // balance
   });
 
   it("supplyTokenTo", async function () {
@@ -84,6 +88,9 @@ describe("SnowballYieldSource", function(){
     expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.eq(
       amount
     );
+    
+    let userInfo = await icequeen.userInfo(0, yieldSource.address);
+    expect(userInfo[0]).to.eq(amount); // balance
   });
 
   it("redeemToken", async function () {
@@ -94,4 +101,39 @@ describe("SnowballYieldSource", function(){
     await yieldSource.redeemToken(amount);
     expect(await snowglobe.balanceOf(wallet.address)).to.eq(amount);
   });
+
+  it("harvest", async function(){
+    await snowglobe.connect(wallet).approve(yieldSource.address, amount);
+    await yieldSource.supplyTokenTo(amount, wallet.address);
+
+    expect(yieldSource.harvest(wallet.address)).to.not.eventually.be.rejected; //owner
+    expect(yieldSource.connect(wallet2).harvest(wallet.address)).to.eventually.be.rejected; //not owner
+
+    await snowballToken.mint(yieldSource.address, 100);
+    await yieldSource.harvest(wallet2.address);
+    
+    expect(await snowballToken.balanceOf(wallet2.address)).to.eq(90); //reward
+    expect(await snowballToken.balanceOf(wallet.address)).to.eq(10); //dev fee
+  });
+
+  it("setDevFundDivRate", async () => {
+    expect(await yieldSource.devFundDivRate()).to.be.eq(10);
+
+    await yieldSource.setDevFundDivRate(20);
+    expect(await yieldSource.devFundDivRate()).to.be.eq(20);
+    expect(yieldSource.connect(wallet2).setDevFundDivRate(30)).to.eventually.be.rejected; //not owner
+    expect(await yieldSource.devFundDivRate()).to.be.eq(20);
+  });
+
+  it("updateDevfund", async () => {
+    expect(await yieldSource.devfund()).to.be.eq(wallet.address);
+
+    await yieldSource.updateDevfund(wallet2.address);
+    expect(await yieldSource.devfund()).to.be.eq(wallet2.address);
+
+    expect(yieldSource.updateDevfund(wallet.address)).to.eventually.be.rejected; //not devFund
+
+    await yieldSource.connect(wallet2).updateDevfund(wallet.address);
+    expect(await yieldSource.devfund()).to.be.eq(wallet.address);
+  })
 });
