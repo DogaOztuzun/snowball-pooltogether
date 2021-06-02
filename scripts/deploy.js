@@ -14,11 +14,11 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  let icequeen = "0x041EE186982159da50Cc8A3A87B5eC669Db0b758"
-  let avaxSnobLP = "0xf91BD10B18B45262A324883FbDB2Ea21d66ca938"
-  let snob = "0xf319e2f610462f846d6e93f51cdc862eeff2a554"
+  let gauge = "0x472075680e16d34aba24ce9a6ddb59f27995906a"
+  let poolToken = "0xA42BE3dB9aff3aee48167b240bFEE5e1697e1281"
+  let snob = "0xC38f41A296A4493Ff429F1238e030924A1542e50"
   const SnowballYieldSourceContract = await hre.ethers.getContractFactory("SnowballYieldSource");
-  const snowballYieldSource = await SnowballYieldSourceContract.deploy(avaxSnobLP, icequeen, snob, 1);
+  const snowballYieldSource = await SnowballYieldSourceContract.deploy(poolToken, gauge, snob);
 
   await snowballYieldSource.deployed();
 

@@ -11,7 +11,7 @@ const { expect } = chai;
 
 describe("SnowballYieldSource", function(){
   let snowglobe;
-  let icequeen;
+  let gauge;
   let wallet;
   let wallet2;
   let yieldSource;
@@ -33,20 +33,19 @@ describe("SnowballYieldSource", function(){
     );
     snowballToken = await snowballTokenContract.deploy();
 
-    const IcequeenContract = await hre.ethers.getContractFactory(
-      "IceQueen",
+    const GaugeContract = await hre.ethers.getContractFactory(
+      "Gauge",
       wallet
     );
-    icequeen = await IcequeenContract.deploy(snowglobe.address, walletDev.address, walletDev.address, 300000000000, 1, 1043700);
+    gauge = await GaugeContract.deploy(snowglobe.address);
 
     const SnowballYieldSourceContract = await ethers.getContractFactory(
       "SnowballYieldSource"
     );
     yieldSource = await SnowballYieldSourceContract.deploy(
       snowglobe.address,
-      icequeen.address,
-      snowballToken.address,
-      0
+      gauge.address,
+      snowballToken.address
       );
     
     amount = toWei("1");
@@ -55,10 +54,10 @@ describe("SnowballYieldSource", function(){
     await snowglobe.mint(wallet.address, amount);
     await snowglobe.mint(wallet2.address, amount.mul(99));
 
-    await icequeen.connect(wallet).add(100, snowglobe.address, false);
+    // await gauge.connect(wallet).add(100, snowglobe.address, false);
 
-    await snowglobe.connect(wallet2).approve(icequeen.address, amount.mul(99));
-    await icequeen.connect(wallet2).deposit(0, amount.mul(99));
+    // await snowglobe.connect(wallet2).approve(gauge.address, amount.mul(99));
+    // await gauge.connect(wallet2).deposit(0, amount.mul(99));
   });
 
   it("get token address", async function () {
@@ -77,19 +76,19 @@ describe("SnowballYieldSource", function(){
       amount
     );
 
-    let userInfo = await icequeen.userInfo(0, yieldSource.address);
+    let userInfo = await gauge.userInfo(0, yieldSource.address);
     expect(userInfo[0]).to.eq(amount); // balance
   });
 
   it("supplyTokenTo", async function () {
     await snowglobe.connect(wallet).approve(yieldSource.address, amount);
     await yieldSource.supplyTokenTo(amount, wallet.address);
-    expect(await snowglobe.balanceOf(icequeen.address)).to.gt(amount.mul(100));
+    expect(await snowglobe.balanceOf(gauge.address)).to.gt(amount.mul(100));
     expect(await yieldSource.callStatic.balanceOfToken(wallet.address)).to.eq(
       amount
     );
     
-    let userInfo = await icequeen.userInfo(0, yieldSource.address);
+    let userInfo = await gauge.userInfo(0, yieldSource.address);
     expect(userInfo[0]).to.eq(amount); // balance
   });
 

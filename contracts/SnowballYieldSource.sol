@@ -6,19 +6,18 @@ import {
 } from "@pooltogether/yield-source-interface/contracts/IYieldSource.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/IIcequeen.sol";
+import "./interfaces/ISnowcones.sol";
 
 contract SnowballYieldSource is IYieldSource {
     using SafeMath for uint256;
 
-    address public sToken;
-    address public icequeen;
-    uint256 public poolIndex;
+    address public gaugeToken;
+    address public snowballGauge;
     mapping(address => uint256) public balances;
 
-    IERC20 private sTokenContract;
+    IERC20 private gaugeTokenContract;
     IERC20 private snowballTokenContact;
-    IIcequeen private icequeenContract;
+    ISnowcones private snowballGaugeContract;
 
     address _owner;
 
@@ -27,20 +26,18 @@ contract SnowballYieldSource is IYieldSource {
     // Dev address.
     address public devfund;
 
-    event Harvest(address indexed prizePool, uint256 indexed poolId, uint256 amount, uint256 devFund);
+    event Harvest(address indexed prizePool, uint256 amount, uint256 devFund);
 
     constructor(
-        address _sToken,
-        address _icequeen,
-        address _snowballToken,
-        uint256 _poolIndex
+        address _gaugeToken,
+        address _gauge,
+        address _snowballToken
     ) public {
-        sToken = _sToken;
-        icequeen = _icequeen;
-        poolIndex = _poolIndex;
+        gaugeToken = _gaugeToken;
+        snowballGauge = _gauge;
 
-        icequeenContract = IIcequeen(icequeen);
-        sTokenContract = IERC20(sToken);
+        snowballGaugeContract = ISnowcones(_gauge);
+        gaugeTokenContract = IERC20(gaugeToken);
         snowballTokenContact = IERC20(_snowballToken);
 
         _owner = msg.sender;
@@ -50,7 +47,7 @@ contract SnowballYieldSource is IYieldSource {
     /// @notice Returns the ERC20 asset token used for deposits.
     /// @return The ERC20 asset token
     function depositToken() external view override returns (address) {
-        return (sToken);
+        return (gaugeToken);
     }
 
     /// @return The underlying balance of asset tokens
@@ -64,15 +61,15 @@ contract SnowballYieldSource is IYieldSource {
     /// @param amount The amount of `token()` to be supplied
     /// @param to The user whose balance will receive the tokens
     function supplyTokenTo(uint256 amount, address to) public override {
-        sTokenContract.transferFrom(msg.sender, address(this), amount);
-        sTokenContract.approve(icequeen, amount);
+        gaugeTokenContract.transferFrom(msg.sender, address(this), amount);
+        gaugeTokenContract.approve(snowballGauge, amount);
 
-        uint256 iqBeforeBalance = getBalanceFromIcequeen(address(this));
+        uint256 gaugeBeforeBalance = snowballGaugeContract.balanceOf(address(this));
 
-        icequeenContract.deposit(poolIndex, amount);
+        snowballGaugeContract.deposit(amount);
 
-        uint256 iqAfterBalance = getBalanceFromIcequeen(address(this));
-        uint256 balanceDiff = iqAfterBalance.sub(iqBeforeBalance);
+        uint256 gaugeAfterBalance = snowballGaugeContract.balanceOf(address(this));
+        uint256 balanceDiff = gaugeAfterBalance.sub(gaugeBeforeBalance);
         balances[to] = balances[to].add(balanceDiff);
     }
 
@@ -80,8 +77,10 @@ contract SnowballYieldSource is IYieldSource {
     /// @param amount The amount of `token()` to withdraw.  Denominated in `token()` as above.
     /// @return The actual amount of tokens that were redeemed.
     function redeemToken(uint256 amount) external override returns (uint256) {
-        icequeenContract.withdraw(poolIndex, amount);
-        sTokenContract.transfer(msg.sender, amount);
+        require(balances[msg.sender] >= amount);
+
+        snowballGaugeContract.withdraw(amount);
+        gaugeTokenContract.transfer(msg.sender, amount);
         balances[msg.sender] = balances[msg.sender].sub(amount);
 
         return (amount);
@@ -90,7 +89,7 @@ contract SnowballYieldSource is IYieldSource {
     function harvest(address prizePool) external returns (uint256) {
         require(_owner == msg.sender);
 
-        icequeenContract.deposit(poolIndex, 0);
+        snowballGaugeContract.getReward();
         uint256 amount = snowballTokenContact.balanceOf(address(this));
 
         uint256 devAmount = 0;
@@ -103,24 +102,9 @@ contract SnowballYieldSource is IYieldSource {
 
         snowballTokenContact.transfer(prizePool, reward);
 
-        emit Harvest(prizePool, poolIndex, reward, devAmount);
+        emit Harvest(prizePool, reward, devAmount);
 
         return amount;
-    }
-
-    function getLiqProviderFromIcequeen() private view returns (address) {
-        (address lp, , , ) = icequeenContract.poolInfo(poolIndex);
-        return lp;
-    }
-
-    function getBalanceFromIcequeen(address adr)
-        private
-        view
-        returns (uint256)
-    {
-        (uint256 balance, ) = icequeenContract.userInfo(poolIndex, adr);
-
-        return balance;
     }
 
     function setDevFundDivRate(uint256 _devFundDivRate) public {
